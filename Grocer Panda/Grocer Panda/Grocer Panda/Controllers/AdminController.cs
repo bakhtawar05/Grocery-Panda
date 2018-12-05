@@ -78,7 +78,81 @@ namespace Grocer_Panda.Controllers
             ViewBag.Status = sta;
             return View(ad);
         }
-        
+    
+        [HttpGet]
+        public ActionResult AddProducts()
+        {
+            return View();
+        }
+        [Authorize]
+        [HttpPost]
+        public ActionResult AddProducts(ProductDb product)
+        {
+
+            if (db.Products.Any(x => x.name == product.name))
+            {
+                ViewBag.DuplicateMessage = "Product Already exists";
+                return View(product);
+            }
+            else
+            {
+                string filename = Path.GetFileNameWithoutExtension(product.ImageFile.FileName);
+                string extension = Path.GetExtension(product.ImageFile.FileName);
+                filename = filename + DateTime.Now.ToString("yymmssfff") + extension;
+                product.image = "~/Image/" + filename;
+                filename = Path.Combine(Server.MapPath("~/Image/"), filename);
+                product.ImageFile.SaveAs(filename);
+
+                Product p = new Product();
+                p.name = product.name;
+                p.Id = product.Id;
+                p.quantity = product.quantity;
+                p.image = product.image;
+                p.category = product.category;
+                p.price = product.price;
+                db.Products.Add(p);
+                db.SaveChanges();
+                ModelState.Clear();
+                ViewBag.SuccessMessage = "Successful";
+                return View();
+            }
+            
+        }
+
+        [HttpGet]
+        public ActionResult ShowProducts()
+        {
+            GroceryEntities1 Gro = new GroceryEntities1();
+            List<Product> data = Gro.Products.ToList();
+            return View(data);
+        }
+
+        [Authorize]
+        [HttpPost]
+        public ActionResult Logout()
+        {
+            FormsAuthentication.SignOut();
+            return RedirectToAction("LoginUser", "Admin");
+        }
+        // GET: Products/Edit/5
+        public ActionResult Edit(int? id)
+        {
+            if (id == null)
+            {
+                return new HttpStatusCodeResult(System.Net.HttpStatusCode.BadRequest);
+            }
+            Product product = db.Products.Find(id);
+            if (product == null)
+            {
+                return HttpNotFound();
+            }
+            return View(product);
+        }
+
+        public ActionResult Profile()
+        {
+            return View();
+        }
 
     }
 }
